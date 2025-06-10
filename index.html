@@ -14,6 +14,7 @@
   <!-- jsPDF from CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="style.css">
+  <script src="test-results-panel.js"></script>
   <style>
     /* Modular Gate UI Styles */
     .global-parameters-section,
@@ -292,6 +293,12 @@
           <span class="icon">📐</span>
           Rysunki techniczne
         </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Testy</h2>
+      <div class="tool-buttons">
         <button id="run-tests-btn" class="tool-btn">
           <span class="icon">🧪</span>
           Uruchom testy
@@ -301,9 +308,7 @@
   </div>
   
   <!-- Bundled script -->
-  <script src="bundle.js"></script>
-  <!-- Tests -->
-  <script src="tests.js"></script>
+  <script src="bundle.js" defer></script>
   <script>
   window.RAL_PALETTE = [
     { text: 'RAL 7016 (Antracyt)', value: 'RAL 7016' },
@@ -332,20 +337,47 @@
   window.generateRALTextures = function() {
     const out = {};
     for (const ral in window.RAL_COLORS) {
-      const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 2;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = window.RAL_COLORS[ral];
-      ctx.fillRect(0,0,2,2);
-      const colorTex = new THREE.Texture(canvas);
+      // Create color texture
+      const colorCanvas = document.createElement('canvas');
+      colorCanvas.width = colorCanvas.height = 2;
+      const colorCtx = colorCanvas.getContext('2d');
+      colorCtx.fillStyle = window.RAL_COLORS[ral];
+      colorCtx.fillRect(0,0,2,2);
+      const colorTex = new THREE.Texture(colorCanvas);
       colorTex.needsUpdate = true;
-      const empty = new THREE.Texture(canvas);
-      empty.needsUpdate = true;
+      
+      // Create normal map texture (neutral normal - flat surface)
+      const normalCanvas = document.createElement('canvas');
+      normalCanvas.width = normalCanvas.height = 2;
+      const normalCtx = normalCanvas.getContext('2d');
+      normalCtx.fillStyle = 'rgb(128, 128, 255)'; // Neutral normal map
+      normalCtx.fillRect(0,0,2,2);
+      const normalTex = new THREE.Texture(normalCanvas);
+      normalTex.needsUpdate = true;
+      
+      // Create roughness map texture (medium roughness)
+      const roughnessCanvas = document.createElement('canvas');
+      roughnessCanvas.width = roughnessCanvas.height = 2;
+      const roughnessCtx = roughnessCanvas.getContext('2d');
+      roughnessCtx.fillStyle = '#808080'; // Medium roughness
+      roughnessCtx.fillRect(0,0,2,2);
+      const roughnessTex = new THREE.Texture(roughnessCanvas);
+      roughnessTex.needsUpdate = true;
+      
+      // Create ambient occlusion map texture (no occlusion)
+      const aoCanvas = document.createElement('canvas');
+      aoCanvas.width = aoCanvas.height = 2;
+      const aoCtx = aoCanvas.getContext('2d');
+      aoCtx.fillStyle = '#FFFFFF'; // No ambient occlusion
+      aoCtx.fillRect(0,0,2,2);
+      const aoTex = new THREE.Texture(aoCanvas);
+      aoTex.needsUpdate = true;
+      
       out[ral] = {
         color: colorTex,
-        normal: empty,
-        roughness: empty,
-        ao: empty
+        normal: normalTex,
+        roughness: roughnessTex,
+        ao: aoTex
       };
     }
     return out;

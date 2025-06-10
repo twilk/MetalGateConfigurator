@@ -1,0 +1,32 @@
+{
+  "name": "metal-gate-configurator",
+  "version": "1.0.0",
+  "description": "DBT Metal Gate Configurator with 3D visualization",
+  "main": "index.html",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:json": "jest --json --outputFile=jest-results.json",
+    "serve": "http-server -c-1 -p 8080"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.test.js",
+      "**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "bundle.js",
+      "!**/node_modules/**"
+    ]
+  }
+}

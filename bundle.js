@@ -1540,35 +1540,29 @@
     }
 
     parseProfileSize(profile) {
-      const parts = profile.split('x');
-      if (parts.length === 2) {
+      const match = profile.match(/(\d+)x(\d+)/);
+      if (match) {
         return {
-          width: parseInt(parts[0]) / 100,
-          height: parseInt(parts[1]) / 100
+          width: parseInt(match[1]) / 100,
+          height: parseInt(match[2]) / 100
         };
       }
-      return { width: 0.15, height: 0.15 };
+      return { width: 0.15, height: 0.15 }; // domyślne
     }
 
     parseFillProfile(profile) {
-      switch (profile) {
-        case 'nowoczesne-poziome':
-          return {
-            thickness: 0.02,
-            spacing: 0.15,
-            depth: 0.08
-          };
-        default:
-          return {
-            thickness: 0.02,
-            spacing: 0.15,
-            depth: 0.08
-          };
-      }
+      const profiles = {
+        'nowoczesne-poziome': { thickness: 0.02, spacing: 0.15, depth: 0.08 },
+        'klasyczne-pionowe': { thickness: 0.02, spacing: 0.12, depth: 0.08 },
+        'grube-poziome': { thickness: 0.03, spacing: 0.2, depth: 0.08 },
+        'cienkie-pionowe': { thickness: 0.015, spacing: 0.1, depth: 0.08 }
+      };
+      return profiles[profile] || profiles['nowoczesne-poziome'];
     }
-
+    
     updateParameters(params) {
-      Object.assign(this, params);
+      this.parameters = Object.assign({}, this.parameters, params);
+      this.createGate();
     }
   }
 
@@ -1632,11 +1626,12 @@
       const gap = this.globalParameters.sectionGap || 0.05;
 
       // Materiał dla słupków
+      const ral7016Textures = this.texturesByRAL?.['RAL 7016'];
       const postMaterial = new THREE.MeshStandardMaterial({
-        map: this.texturesByRAL?.ral7016?.color,
-        normalMap: this.texturesByRAL?.ral7016?.normal,
-        roughnessMap: this.texturesByRAL?.ral7016?.roughness,
-        aoMap: this.texturesByRAL?.ral7016?.ao,
+        map: ral7016Textures?.color || null,
+        normalMap: ral7016Textures?.normal || null,
+        roughnessMap: ral7016Textures?.roughness || null,
+        aoMap: ral7016Textures?.ao || null,
         metalness: 0.9,
         roughness: 0.1
       });
@@ -2312,212 +2307,243 @@
     animate();
 
     // Obsługa przycisków narzędzi
-    document.getElementById('pdf-btn').addEventListener('click', () => {
-      const pdfExporter = new ExportPDF(sceneManager.renderer);
-      const parameters = modularGateModel.getParameters();
-      const costs = costCalculator.calculateModular(parameters);
-      pdfExporter.generate(parameters, costs);
-    });
+    const pdfBtn = document.getElementById('pdf-btn');
+    if (pdfBtn) {
+      pdfBtn.addEventListener('click', () => {
+        const pdfExporter = new ExportPDF(sceneManager.renderer);
+        const parameters = modularGateModel.getParameters();
+        const costs = costCalculator.calculateModular(parameters);
+        pdfExporter.generate(parameters, costs);
+      });
+    }
 
-    document.getElementById('specs-btn').addEventListener('click', () => {
-      const parameters = modularGateModel.getParameters();
-      const costs = costCalculator.calculateModular(parameters);
-      
-      const specsWindow = window.open('', '_blank', 'width=800,height=600');
-      specsWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Specyfikacja Bramy</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .spec-item { margin: 10px 0; padding: 10px; background: #f5f5f5; }
-            .cost-item { margin: 5px 0; }
-            .total { font-weight: bold; font-size: 1.2em; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <h1>Specyfikacja Bramy Modułowej</h1>
-          <div class="spec-item">
-            <h3>Parametry Globalne:</h3>
-            <p>Wysokość: ${parameters.globalParameters.height}m</p>
-            <p>Głębokość: ${parameters.globalParameters.depth}m</p>
-            <p>Profil ramy: ${parameters.globalParameters.frameProfile}</p>
-          </div>
-          <div class="spec-item">
-            <h3>Sekcje (${parameters.sections.length}):</h3>
-            ${parameters.sections.map((section, index) => `
-              <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #007bff;">
-                <h4>Sekcja ${index + 1}: ${modularUIManager.getSectionTypeName(section.type)}</h4>
-                <p>Szerokość: ${section.width}m</p>
-                <p>Typ wypełnienia: ${section.fillType}</p>
-                <p>Profil wypełnienia: ${section.fillProfile}</p>
-              </div>
-            `).join('')}
-          </div>
-          <div class="spec-item">
-            <h3>Kosztorys:</h3>
-            <div class="cost-item">Stal: ${costs.steelCost.toFixed(2)} PLN</div>
-            <div class="cost-item">Ocynk: ${costs.galvCost.toFixed(2)} PLN</div>
-            <div class="cost-item">Robocizna: ${costs.laborCost.toFixed(2)} PLN</div>
-            <div class="cost-item">Montaż: ${costs.assemblyCost.toFixed(2)} PLN</div>
-            <div class="cost-item">Śruby: ${costs.screwsCost.toFixed(2)} PLN</div>
-            <div class="cost-item">Wypełnienie: ${costs.fillCost.toFixed(2)} PLN</div>
-            <div class="total">Razem: ${costs.total.toFixed(2)} PLN</div>
-          </div>
-        </body>
-        </html>
-      `);
-      specsWindow.document.close();
-    });
+    const specsBtn = document.getElementById('specs-btn');
+    if (specsBtn) {
+      specsBtn.addEventListener('click', () => {
+        const parameters = modularGateModel.getParameters();
+        const costs = costCalculator.calculateModular(parameters);
+        
+        const specsWindow = window.open('', '_blank', 'width=800,height=600');
+        specsWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Specyfikacja Bramy</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .spec-item { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+              .cost-item { margin: 5px 0; }
+              .total { font-weight: bold; font-size: 1.2em; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <h1>Specyfikacja Bramy Modułowej</h1>
+            <div class="spec-item">
+              <h3>Parametry Globalne:</h3>
+              <p>Wysokość: ${parameters.globalParameters.height}m</p>
+              <p>Głębokość: ${parameters.globalParameters.depth}m</p>
+              <p>Profil ramy: ${parameters.globalParameters.frameProfile}</p>
+            </div>
+            <div class="spec-item">
+              <h3>Sekcje (${parameters.sections.length}):</h3>
+              ${parameters.sections.map((section, index) => `
+                <div style="margin: 10px 0; padding: 10px; border-left: 3px solid #007bff;">
+                  <h4>Sekcja ${index + 1}: ${modularUIManager.getSectionTypeName(section.type)}</h4>
+                  <p>Szerokość: ${section.width}m</p>
+                  <p>Typ wypełnienia: ${section.fillType}</p>
+                  <p>Profil wypełnienia: ${section.fillProfile}</p>
+                </div>
+              `).join('')}
+            </div>
+            <div class="spec-item">
+              <h3>Kosztorys:</h3>
+              <div class="cost-item">Stal: ${costs.steelCost.toFixed(2)} PLN</div>
+              <div class="cost-item">Ocynk: ${costs.galvCost.toFixed(2)} PLN</div>
+              <div class="cost-item">Robocizna: ${costs.laborCost.toFixed(2)} PLN</div>
+              <div class="cost-item">Montaż: ${costs.assemblyCost.toFixed(2)} PLN</div>
+              <div class="cost-item">Śruby: ${costs.screwsCost.toFixed(2)} PLN</div>
+              <div class="cost-item">Wypełnienie: ${costs.fillCost.toFixed(2)} PLN</div>
+              <div class="total">Razem: ${costs.total.toFixed(2)} PLN</div>
+            </div>
+          </body>
+          </html>
+        `);
+        specsWindow.document.close();
+      });
+    }
 
-    document.getElementById('drawings-btn').addEventListener('click', () => {
-      const parameters = modularGateModel.getParameters();
-      const totalWidth = modularGateModel.getTotalWidth();
-      
-      const drawingWindow = window.open('', '_blank', 'width=1000,height=800');
-      drawingWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Rysunki Techniczne</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .drawing { margin: 20px 0; border: 1px solid #ccc; padding: 20px; }
-            .dimensions { font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <h1>Rysunki Techniczne Bramy Modułowej</h1>
-          
-          <div class="drawing">
-            <h3>Widok z przodu</h3>
-            <svg width="800" height="400" style="border: 1px solid #000;">
-              <rect x="50" y="50" width="${totalWidth * 100}" height="${parameters.globalParameters.height * 100}" 
-                    fill="none" stroke="#000" stroke-width="2"/>
-              
-              ${parameters.sections.map((section, index) => {
-                let x = 50;
-                for (let i = 0; i < index; i++) {
-                  x += parameters.sections[i].width * 100 + 15; // 15cm na słupek
-                }
-                return `
-                  <rect x="${x}" y="50" width="${section.width * 100}" height="${parameters.globalParameters.height * 100}" 
-                        fill="none" stroke="#007bff" stroke-width="1" stroke-dasharray="5,5"/>
-                  <text x="${x + section.width * 50}" y="30" text-anchor="middle" class="dimensions">
-                    ${modularUIManager.getSectionTypeName(section.type)} (${section.width}m)
-                  </text>
-                `;
-              }).join('')}
-              
-              <text x="50" y="${parameters.globalParameters.height * 100 + 80}" class="dimensions">
-                Szerokość całkowita: ${totalWidth.toFixed(2)}m
-              </text>
-              <text x="50" y="${parameters.globalParameters.height * 100 + 100}" class="dimensions">
-                Wysokość: ${parameters.globalParameters.height}m
-              </text>
-            </svg>
-          </div>
-          
-          <div class="drawing">
-            <h3>Widok z boku</h3>
-            <svg width="400" height="400" style="border: 1px solid #000;">
-              <rect x="50" y="50" width="${parameters.globalParameters.depth * 100}" height="${parameters.globalParameters.height * 100}" 
-                    fill="none" stroke="#000" stroke-width="2"/>
-              <text x="50" y="${parameters.globalParameters.height * 100 + 80}" class="dimensions">
-                Głębokość: ${parameters.globalParameters.depth}m
-              </text>
-            </svg>
-          </div>
-        </body>
-        </html>
-      `);
-      drawingWindow.document.close();
-    });
+    const drawingsBtn = document.getElementById('drawings-btn');
+    if (drawingsBtn) {
+      drawingsBtn.addEventListener('click', () => {
+        const parameters = modularGateModel.getParameters();
+        const totalWidth = modularGateModel.getTotalWidth();
+        
+        const drawingWindow = window.open('', '_blank', 'width=1000,height=800');
+        drawingWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Rysunki Techniczne</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .drawing { margin: 20px 0; border: 1px solid #ccc; padding: 20px; }
+              .dimensions { font-size: 12px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <h1>Rysunki Techniczne Bramy Modułowej</h1>
+            
+            <div class="drawing">
+              <h3>Widok z przodu</h3>
+              <svg width="800" height="400" style="border: 1px solid #000;">
+                <rect x="50" y="50" width="${totalWidth * 100}" height="${parameters.globalParameters.height * 100}" 
+                      fill="none" stroke="#000" stroke-width="2"/>
+                
+                ${parameters.sections.map((section, index) => {
+                  let x = 50;
+                  for (let i = 0; i < index; i++) {
+                    x += parameters.sections[i].width * 100 + 15; // 15cm na słupek
+                  }
+                  return `
+                    <rect x="${x}" y="50" width="${section.width * 100}" height="${parameters.globalParameters.height * 100}" 
+                          fill="none" stroke="#007bff" stroke-width="1" stroke-dasharray="5,5"/>
+                    <text x="${x + section.width * 50}" y="30" text-anchor="middle" class="dimensions">
+                      ${modularUIManager.getSectionTypeName(section.type)} (${section.width}m)
+                    </text>
+                  `;
+                }).join('')}
+                
+                <text x="50" y="${parameters.globalParameters.height * 100 + 80}" class="dimensions">
+                  Szerokość całkowita: ${totalWidth.toFixed(2)}m
+                </text>
+                <text x="50" y="${parameters.globalParameters.height * 100 + 100}" class="dimensions">
+                  Wysokość: ${parameters.globalParameters.height}m
+                </text>
+              </svg>
+            </div>
+            
+            <div class="drawing">
+              <h3>Widok z boku</h3>
+              <svg width="400" height="400" style="border: 1px solid #000;">
+                <rect x="50" y="50" width="${parameters.globalParameters.depth * 100}" height="${parameters.globalParameters.height * 100}" 
+                      fill="none" stroke="#000" stroke-width="2"/>
+                <text x="50" y="${parameters.globalParameters.height * 100 + 80}" class="dimensions">
+                  Głębokość: ${parameters.globalParameters.depth}m
+                </text>
+              </svg>
+            </div>
+          </body>
+          </html>
+        `);
+        drawingWindow.document.close();
+      });
+    }
 
     // Test button
-    document.getElementById('run-tests-btn').addEventListener('click', () => {
-      const tests = new GateConfiguratorTests();
-      tests.runAll();
-    });
+    const runTestsBtn = document.getElementById('run-tests-btn');
+    if (runTestsBtn) {
+      runTestsBtn.addEventListener('click', () => {
+        if (window.testResultsPanel) {
+          window.testResultsPanel.runTests();
+        } else {
+          console.log('Test results panel not available');
+        }
+      });
+    }
+
+    // Initialize test results panel
+    const toolsPanel = document.getElementById('tools-panel');
+    if (toolsPanel) {
+      window.testResultsPanel = new TestResultsPanel(toolsPanel);
+    }
 
     // Obsługa przycisków narzędzi
-    document.getElementById('import-btn').addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            try {
-              const data = JSON.parse(event.target.result);
-              if (data.modularParameters) {
-                // Import modułowej bramy
-                modularGateModel.sections = [];
-                modularGateModel.sectionCounter = 0;
-                
-                // Przywróć parametry globalne (w tym pattern)
-                modularGateModel.updateGlobalParameters(data.modularParameters.globalParameters);
-                
-                // Przywróć sekcje
-                data.modularParameters.sections.forEach(sectionData => {
-                  const section = new GateSection(
-                    sectionData.id,
-                    sectionData.type,
-                    sectionData.width,
-                    sectionData.height,
-                    sectionData.depth,
-                    sectionData.fillType,
-                    sectionData.fillProfile,
-                    sectionData.color
-                  );
-                  section.frameProfile = sectionData.frameProfile;
-                  modularGateModel.sections.push(section);
-                  modularGateModel.sectionCounter = Math.max(modularGateModel.sectionCounter, parseInt(sectionData.id.split('_')[1]) + 1);
-                });
-                
-                modularGateModel.updateVisualization();
-                modularUIManager.updateSectionsUI();
-                modularUIManager.updateCost();
-              } else {
-                // Import starego formatu - konwersja do modułowego
-                const oldParams = data.parameters;
-                modularGateModel.sections = [];
-                modularGateModel.sectionCounter = 0;
-                
-                modularGateModel.updateGlobalParameters({
-                  height: oldParams.height,
-                  depth: oldParams.depth,
-                  frameProfile: oldParams.frameProfile
-                });
-                
-                // Utwórz sekcję z parametrami starej bramy
-                modularGateModel.addSection('gate', oldParams.width, oldParams.fillType, oldParams.fillProfile, oldParams.color);
-                modularUIManager.updateSectionsUI();
-                modularUIManager.updateCost();
+    const importBtn = document.getElementById('import-btn');
+    if (importBtn) {
+      importBtn.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              try {
+                const data = JSON.parse(event.target.result);
+                if (data.modularParameters) {
+                  // Import modułowej bramy
+                  modularGateModel.sections = [];
+                  modularGateModel.sectionCounter = 0;
+                  
+                  // Przywróć parametry globalne (w tym pattern)
+                  modularGateModel.updateGlobalParameters(data.modularParameters.globalParameters);
+                  
+                  // Przywróć sekcje
+                  data.modularParameters.sections.forEach(sectionData => {
+                    const section = new GateSection(
+                      sectionData.id,
+                      sectionData.type,
+                      sectionData.width,
+                      sectionData.height,
+                      sectionData.depth,
+                      sectionData.fillType,
+                      sectionData.fillProfile,
+                      sectionData.color
+                    );
+                    section.frameProfile = sectionData.frameProfile;
+                    modularGateModel.sections.push(section);
+                    modularGateModel.sectionCounter = Math.max(modularGateModel.sectionCounter, parseInt(sectionData.id.split('_')[1]) + 1);
+                  });
+                  
+                  modularGateModel.updateVisualization();
+                  modularUIManager.updateSectionsUI();
+                  modularUIManager.updateCost();
+                } else {
+                  // Import starego formatu - konwersja do modułowego
+                  const oldParams = data.parameters;
+                  modularGateModel.sections = [];
+                  modularGateModel.sectionCounter = 0;
+                  
+                  modularGateModel.updateGlobalParameters({
+                    height: oldParams.height,
+                    depth: oldParams.depth,
+                    frameProfile: oldParams.frameProfile
+                  });
+                  
+                  // Utwórz sekcję z parametrami starej bramy
+                  modularGateModel.addSection('gate', oldParams.width, oldParams.fillType, oldParams.fillProfile, oldParams.color);
+                  modularUIManager.updateSectionsUI();
+                  modularUIManager.updateCost();
+                }
+              } catch (error) {
+                alert('Błąd podczas importowania pliku: ' + error.message);
               }
-            } catch (error) {
-              alert('Błąd podczas importowania pliku: ' + error.message);
-            }
-          };
-          reader.readAsText(file);
-        }
-      };
-      input.click();
-    });
+            };
+            reader.readAsText(file);
+          }
+        };
+        input.click();
+      });
+    }
 
-    document.getElementById('export-btn').addEventListener('click', () => {
-      const parameters = modularGateModel.getParameters();
-      const blob = new Blob([JSON.stringify({ modularParameters: parameters }, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'projekt_bramy.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const parameters = modularGateModel.getParameters();
+        const blob = new Blob([JSON.stringify({ modularParameters: parameters }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'projekt_bramy.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // Export main instances for TestResultsPanel
+    window.sceneManager = sceneManager;
+    window.modularGateModel = modularGateModel;
   });
 
   // Export GateModel, UIManager, CostCalculator to window

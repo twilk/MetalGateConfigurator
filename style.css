@@ -394,3 +394,188 @@ input[type="range"] {
   padding: 8px 0;
   font-size: 1em;
 }
+
+/* Test Results Panel Styles */
+.test-results-panel {
+  width: 100%; /* Make it take full width of its container */
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Lighter shadow */
+  z-index: 1000;
+  backdrop-filter: blur(5px); /* Slightly less blur */
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  margin-top: 15px; /* Add some margin from the documentation section */
+}
+
+.test-results-panel.collapsed {
+  width: 100%; /* Should remain full width */
+  height: auto; /* Allow height to adjust */
+  border-radius: 8px; /* Maintain normal border radius */
+  overflow: hidden;
+}
+
+.test-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  cursor: pointer;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.test-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.test-status-icon {
+  font-size: 16px;
+}
+
+.test-summary {
+  font-weight: 500;
+  color: #333;
+  font-size: 12px;
+}
+
+.test-toggle {
+  background: none;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  transform: rotate(-90deg); /* Default collapsed */
+  transition: transform 0.2s;
+}
+
+.test-results-panel.collapsed .test-toggle {
+  transform: rotate(0deg); /* Expanded */
+}
+
+.test-content {
+  padding: 12px;
+}
+
+.test-results-panel.collapsed .test-content {
+  display: none;
+}
+
+.test-progress-section {
+  margin-bottom: 12px;
+}
+
+.test-version {
+  margin-bottom: 8px;
+}
+
+.version-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.progress-bar-container {
+  position: relative;
+  height: 20px;
+  background: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.v2-progress {
+  background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.v3-progress {
+  background: linear-gradient(90deg, #007bff, #6610f2);
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.test-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: center; /* Center buttons */
+}
+
+.test-actions button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+  flex-grow: 1; /* Make buttons expand */
+}
+
+.test-actions button:hover {
+  background: #0056b3;
+}
+
+.test-timestamp {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Notifications - keep global */
+.test-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  z-index: 1001;
+  animation: slideIn 0.3s ease;
+}
+
+.test-notification.info {
+  background: #17a2b8;
+}
+
+.test-notification.success {
+  background: #28a745;
+}
+
+.test-notification.error {
+  background: #dc3545;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
