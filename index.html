@@ -14,6 +14,240 @@
   <!-- jsPDF from CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Modular Gate UI Styles */
+    .global-parameters-section,
+    .gate-section {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .global-parameters-section.collapsed .section-content,
+    .gate-section.collapsed .section-content {
+      display: none;
+    }
+
+    .section-header {
+      background: #e9ecef;
+      padding: 12px 15px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .section-header:hover {
+      background: #dee2e6;
+    }
+
+    .section-header h3,
+    .section-header h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .section-header h4 {
+      font-size: 14px;
+    }
+
+    .section-controls {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .move-up-btn,
+    .move-down-btn,
+    .remove-section-btn {
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .move-up-btn:hover,
+    .move-down-btn:hover {
+      background: #5a6268;
+    }
+
+    .remove-section-btn {
+      background: #dc3545;
+    }
+
+    .remove-section-btn:hover {
+      background: #c82333;
+    }
+
+    .toggle-icon {
+      font-size: 12px;
+      color: #6c757d;
+      transition: transform 0.2s;
+    }
+
+    .collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .section-content {
+      padding: 15px;
+    }
+
+    .global-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .slider-wrapper,
+    .dropdown-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ui-label {
+      font-weight: 500;
+      color: #495057;
+      font-size: 14px;
+    }
+
+    .value-display {
+      font-weight: 600;
+      color: #007bff;
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .add-section-container {
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .add-section-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .add-section-btn:hover {
+      background: #218838;
+    }
+
+    .add-section-btn .icon {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .add-section-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .menu-item {
+      background: none;
+      border: none;
+      padding: 12px 20px;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #495057;
+    }
+
+    .menu-item:hover {
+      background: #f8f9fa;
+    }
+
+    .menu-item:not(:last-child) {
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .sections-container {
+      margin: 20px 0;
+    }
+
+    #ui-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 640px;
+      height: 100%;
+      padding: 32px;
+      background: var(--card-background);
+      box-shadow: var(--shadow);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 32px;
+      z-index: 10;
+      transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    #ui-container.collapsed {
+      transform: translateX(-100%);
+    }
+    #collapse-panel-btn {
+      position: fixed;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1002;
+      width: 32px;
+      height: 48px;
+      border: none;
+      background: #222;
+      color: #fff;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-size: 1.3em;
+      align-items: center;
+      justify-content: center;
+      display: flex; /* Zawsze widoczny */
+    }
+    #collapse-panel-btn:hover {
+      background: #0056b3;
+    }
+    .stats, #stats {
+      position: fixed !important;
+      top: 8px !important;
+      right: 8px !important;
+      left: auto !important;
+      z-index: 2000 !important;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
   <canvas id="three-canvas"></canvas>
@@ -70,5 +304,83 @@
   <script src="bundle.js"></script>
   <!-- Tests -->
   <script src="tests.js"></script>
+  <script>
+  window.RAL_PALETTE = [
+    { text: 'RAL 7016 (Antracyt)', value: 'RAL 7016' },
+    { text: 'RAL 9005 (Czarny)', value: 'RAL 9005' },
+    { text: 'RAL 6005 (Zielony)', value: 'RAL 6005' },
+    { text: 'RAL 8017 (Brązowy)', value: 'RAL 8017' },
+    { text: 'RAL 9010 (Biały)', value: 'RAL 9010' },
+    { text: 'RAL 7040 (Szary)', value: 'RAL 7040' },
+    { text: 'RAL 3005 (Bordowy)', value: 'RAL 3005' },
+    { text: 'RAL 5010 (Niebieski)', value: 'RAL 5010' },
+    { text: 'RAL 1015 (Kremowy)', value: 'RAL 1015' },
+    // ...dodaj więcej wg potrzeb
+  ];
+  window.RAL_COLORS = {
+    'RAL 7016': '#383e42',
+    'RAL 9005': '#0a0a0a',
+    'RAL 6005': '#21421e',
+    'RAL 8017': '#44322d',
+    'RAL 9010': '#fffefb',
+    'RAL 7040': '#9da3a6',
+    'RAL 3005': '#5e2129',
+    'RAL 5010': '#13447c',
+    'RAL 1015': '#e6d2b5',
+    // ...
+  };
+  window.generateRALTextures = function() {
+    const out = {};
+    for (const ral in window.RAL_COLORS) {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 2;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = window.RAL_COLORS[ral];
+      ctx.fillRect(0,0,2,2);
+      const colorTex = new THREE.Texture(canvas);
+      colorTex.needsUpdate = true;
+      const empty = new THREE.Texture(canvas);
+      empty.needsUpdate = true;
+      out[ral] = {
+        color: colorTex,
+        normal: empty,
+        roughness: empty,
+        ao: empty
+      };
+    }
+    return out;
+  };
+  document.addEventListener('DOMContentLoaded', function() {
+    const panel = document.getElementById('ui-container');
+    const collapseBtn = document.getElementById('collapse-panel-btn');
+
+    function togglePanel() {
+      panel.classList.toggle('collapsed');
+      collapseBtn.innerText = panel.classList.contains('collapsed') ? '»' : '«';
+    }
+
+    collapseBtn.addEventListener('click', togglePanel);
+
+    document.addEventListener('keydown', function(e) {
+      if ((e.key === '`' || e.key === '~') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        togglePanel();
+      }
+    });
+
+    setTimeout(() => {
+      const stats = document.querySelector('.stats, #stats');
+      if (stats) {
+        stats.style.position = 'fixed';
+        stats.style.top = '8px';
+        stats.style.right = '8px';
+        stats.style.left = 'auto';
+        stats.style.zIndex = '2000';
+        stats.style.pointerEvents = 'none';
+      }
+    }, 500);
+  });
+  </script>
+  <button id="collapse-panel-btn" title="Zwiń/Rozwiń panel">«</button>
 </body>
 </html>
